@@ -63,10 +63,11 @@ type Series struct {
 }
 
 // DataPoint describes concrete point of time series.
-type DataPoint struct {
-	Value     float64
-	Timestamp time.Time
-}
+//type DataPoint struct {
+//	Value     float64
+//	Timestamp time.Time
+//}
+type DataPoint []string
 
 func unmarshallSeries(data []byte) ([]Series, error) {
 	empty, result := []Series{}, []Series{}
@@ -128,7 +129,7 @@ func unmarshallDatapoints(data []byte) ([]DataPoint, error) {
 }
 
 func unmarshallDatapoint(data []byte) (DataPoint, error) {
-	empty, result := DataPoint{}, DataPoint{}
+	empty, result := DataPoint{}, make(DataPoint, 2) 
 	var err error = nil
 	position := 0
 	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -137,14 +138,14 @@ func unmarshallDatapoint(data []byte) (DataPoint, error) {
 		}
 		if position == 0 {
 			if dataType == jsonparser.Null {
-				result.Value = 0
+				result[0] = "null"
 			} else {
 				v, e := strconv.ParseFloat(string(value), 64)
 				if e != nil {
 					err = e
 					return
 				}
-				result.Value = v
+				result[0] = v
 			}
 		} else {
 			ts, e := strconv.ParseInt(string(value), 10, 32)
@@ -152,7 +153,7 @@ func unmarshallDatapoint(data []byte) (DataPoint, error) {
 				err = e
 				return
 			}
-			result.Timestamp = time.Unix(ts, 0)
+			result[1] = ts
 		}
 		position++
 	})
