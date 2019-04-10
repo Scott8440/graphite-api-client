@@ -58,9 +58,9 @@ func (c *Client) QueryRender(r RenderRequest) ([]Series, error) {
 
 // Series describes time series data for given target.
 type Series struct {
-	Target     string
-	Datapoints []DataPoint
-	Tags       map[string]string
+	Target     string            `json:"target"`
+	Datapoints []DataPoint       `json:"datapoints"`
+	Tags       map[string]string `json:"tags"`
 }
 
 // DataPoint describes concrete point of time series.
@@ -149,7 +149,7 @@ func unmarshallTags(data []byte) (map[string]string, error) {
 }
 
 func unmarshallDatapoint(data []byte) (DataPoint, error) {
-	empty, result := DataPoint{}, make(DataPoint, 2) 
+	empty, result := DataPoint{}, make(DataPoint, 2)
 	var err error = nil
 	position := 0
 	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
