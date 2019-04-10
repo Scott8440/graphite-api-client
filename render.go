@@ -60,6 +60,7 @@ func (c *Client) QueryRender(r RenderRequest) ([]Series, error) {
 type Series struct {
 	Target     string
 	Datapoints []DataPoint
+	Tags       map[string]string
 }
 
 // DataPoint describes concrete point of time series.
@@ -88,7 +89,13 @@ func unmarshallSeries(data []byte) ([]Series, error) {
 			return
 		}
 
-		result = append(result, Series{Target: target, Datapoints: datapoints})
+		tags, e := unmarshallTags(value)
+		if e != nil {
+			ie = e
+			return
+		}
+
+		result = append(result, Series{Target: target, Datapoints: datapoints, Tags: tags})
 	})
 
 	if err != nil {
@@ -124,6 +131,23 @@ func unmarshallDatapoints(data []byte) ([]DataPoint, error) {
 	return result, nil
 }
 
+func unmarshallTags(data []byte) (map[string]string, error) {
+	tags := make(map[string]string)
+	rawData, _, _, err := jsonparser.Get(data, "tags")
+	if err != nil {
+		return tags, err
+	}
+
+	err = jsonparser.ObjectEach(rawData, func(key, value []byte, dataType jsonparser.ValueType, offset int) error {
+		if err != nil {
+			return err
+		}
+		tags[string(key)] = string(value)
+		return nil
+	})
+	return tags, nil
+}
+
 func unmarshallDatapoint(data []byte) (DataPoint, error) {
 	empty, result := DataPoint{}, make(DataPoint, 2) 
 	var err error = nil
@@ -134,12 +158,12 @@ func unmarshallDatapoint(data []byte) (DataPoint, error) {
 		}
 		if position == 0 {
 			if dataType == jsonparser.Null {
-				result[0] = "null"
+				result[1] = "null"
 			} else {
-				result[0] = string(value)
+				result[1] = string(value)
 			}
 		} else {
-			result[1] = string(value)
+			result[0] = string(value)
 		}
 		position++
 	})
